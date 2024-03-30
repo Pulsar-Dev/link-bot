@@ -6,8 +6,13 @@ static CONFIG_FILE_NAME: &'static str = "config.toml";
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ConfigFile {
+    #[serde(rename = "discord-token")]
     pub discord_token: String,
     pub guilds: Vec<i64>,
+    #[serde(rename = "api-url")]
+    pub api_url: String,
+    #[serde(rename = "api-key")]
+    pub api_key: String,
 }
 
 #[derive(Debug)]
@@ -22,29 +27,6 @@ impl fmt::Display for ConfigFileError {
 impl Context for ConfigFileError {}
 
 impl ConfigFile {
-    pub fn new(token: String, guilds: Vec<i64>) -> Self {
-        Self {
-            discord_token: token,
-            guilds,
-        }
-    }
-
-    pub fn write(&self) -> Result<(), ConfigFileError> {
-        let encoded_toml = toml::to_string(self).map_err(|e| {
-            Report::from(e)
-                .attach_printable("Failed to encode config")
-                .change_context(ConfigFileError)
-        })?;
-
-        fs::write(format!("./{}", CONFIG_FILE_NAME), encoded_toml).map_err(|e| {
-            Report::from(e)
-                .attach_printable("Failed to write encoded config file")
-                .change_context(ConfigFileError)
-        })?;
-
-        Ok(())
-    }
-
     pub fn read() -> Result<ConfigFile, ConfigFileError> {
         let config_file = fs::read(format!("./{}", CONFIG_FILE_NAME)).map_err(|e| {
             Report::from(e)

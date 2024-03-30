@@ -8,6 +8,9 @@ use serenity::{
 use std::fmt;
 
 mod ban;
+mod user_create;
+mod user_get;
+mod addons;
 
 #[async_trait]
 pub trait Command
@@ -41,5 +44,10 @@ impl fmt::Display for CommandExecutionError {
 impl Context for CommandExecutionError {}
 
 pub fn load_commands() -> Vec<Box<dyn Command + Send + Sync>> {
-    vec![Box::new(ban::BanCommand)]
+    vec![
+        Box::new(ban::BanCommand),
+        Box::new(user_create::UserCreateCommand),
+        Box::new(user_get::UserGetCommand),
+        Box::new(addons::UserAddonsCommand),
+    ]
 }

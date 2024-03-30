@@ -9,7 +9,6 @@ mod bot;
 mod commands;
 mod config;
 mod event_handler;
-mod hash_string;
 
 #[derive(Debug)]
 struct ApplicationInitialisationError;
@@ -37,17 +36,7 @@ async fn main() -> Result<(), ApplicationInitialisationError> {
         .arg_required_else_help(true)
         .subcommand_required(true)
         .subcommand(Command::new("start").about("Starts the bot"))
-        .subcommand(Command::new("push").about("Pushes the latest commands to Discord."))
-        .subcommand(
-            Command::new("setup")
-                .about("Initialise configuration files.")
-                .arg(
-                    Arg::new("token")
-                        .required(true)
-                        .action(ArgAction::Set)
-                        .help("Discord bot token"),
-                ),
-        );
+        .subcommand(Command::new("push").about("Pushes the latest commands to Discord."));
 
     match commands.get_matches().subcommand() {
         Some(("start", _)) => start()
@@ -56,23 +45,6 @@ async fn main() -> Result<(), ApplicationInitialisationError> {
         Some(("push", _)) => start()
             .await
             .change_context(ApplicationInitialisationError)?,
-        Some(("setup", args)) => {
-            let token: &String = match args.get_one("token") {
-                Some(token) => token,
-                None => {
-                    return Err(Report::new(ApplicationInitialisationError)
-                        .attach_printable("Failed to parse token from command line input"))
-                }
-            };
-
-            let config = config::ConfigFile::new(token.clone(), vec![1110009506391404616]);
-
-            config
-                .write()
-                .change_context(ApplicationInitialisationError)?;
-
-            println!("{:?}", config::ConfigFile::read().unwrap());
-        }
         _ => unreachable!(),
     }
 
