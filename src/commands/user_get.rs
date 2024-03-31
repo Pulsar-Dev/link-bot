@@ -146,7 +146,7 @@ impl Command for UserGetCommand {
 
         let message = CreateInteractionResponseMessage::new()
             .content(format!(
-            "- Pulsar ID: {}\n- Steam ID: [{}](<https://steamcommunity.com/id/{}/)\n- Gmodstore ID: [{}](<https://www.gmodstore.com/users/{})\n- Discord ID: [{}](<https://discord.com/users/{}>)
+            "- Pulsar ID: {}\n- Steam ID: [{}](<https://steamcommunity.com/id/{}/>)\n- Gmodstore ID: [{}](<https://www.gmodstore.com/users/{}>)\n- Discord ID: [{}](<https://discord.com/users/{}>)
             ", user.id.unwrap(), steam_id, steam_id, gmodstore_id, gmodstore_id, discord_id, discord_id));
 
         let builder = CreateInteractionResponse::Message(message);
