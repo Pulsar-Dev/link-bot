@@ -67,8 +67,6 @@ impl Command for UserGetCommand {
             }
         };
 
-        let sub_command_type = sub_command_data.name.as_str();
-
         let id;
         match command_type {
             "discord" => {
