@@ -140,10 +140,14 @@ impl Command for UserGetCommand {
             return Ok(());
         }
 
+        let steam_id = user.steamId.unwrap();
+        let gmodstore_id = user.gmodstoreId.unwrap();
+        let discord_id = user.discordId.unwrap();
+
         let message = CreateInteractionResponseMessage::new()
             .content(format!(
-            "- Pulsar ID: [{}](<https://pornhub.com>)\n- Steam ID: [{}](<https://pornhub.com>)\n- Gmodstore ID: [{}](<https://pornhub.com>)\n- Discord ID: [{}](<https://pornhub.com>)
-            ", user.id.unwrap(), user.steamId.unwrap(), user.gmodstoreId.unwrap(), user.discordId.unwrap()));
+            "- Pulsar ID: {}\n- Steam ID: [{}](<https://steamcommunity.com/id/{}/)\n- Gmodstore ID: [{}](<https://www.gmodstore.com/users/{})\n- Discord ID: [{}](<https://discord.com/users/{}>)
+            ", user.id.unwrap(), steam_id, steam_id, gmodstore_id, gmodstore_id, discord_id, discord_id));
 
         let builder = CreateInteractionResponse::Message(message);
 
