@@ -1,5 +1,5 @@
 [package]
-name = "rust-discord-bot"
+name = "pulsar-link-discord-bot"
 version = "0.1.0"
 edition = "2021"
 
