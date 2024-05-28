@@ -1,9 +1,11 @@
-use bot::start;
-use clap::{Arg, ArgAction, Command};
-use error_stack::{Context, Report, Result, ResultExt};
 use std::{env, fmt};
+
+use clap::Command;
+use error_stack::{Context, Result, ResultExt};
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
+
+use bot::start;
 
 mod bot;
 mod commands;
