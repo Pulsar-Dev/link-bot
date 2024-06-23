@@ -1,0 +1,40 @@
+name: Compile binaries
+
+on:
+    release:
+        types: [ published ]
+
+jobs:
+    compile:
+        name: Compile binaries
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Checkout
+                uses: actions/checkout@v4
+            -   name: Setup Rust
+                uses: actions-rs/toolchain@v1
+                with:
+                    toolchain: stable
+            -   name: Compile
+                run: cargo build --release
+            -   name: Upload binary
+                uses: actions/upload-artifact@v4
+                with:
+                    name: pulsar-link-bot
+                    path: ./target/release/pulsar-link-bot
+    upload:
+        name: Upload binaries to release
+        needs: compile
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Download binary artifact
+                uses: actions/download-artifact@v4
+                with:
+                    name: pulsar-link-bot
+            -   name: Upload binaries to release
+                uses: ncipollo/release-action@v1
+                with:
+                    token: ${{ secrets.RELEASE_TOKEN }}
+                    artifacts: "pulsar-link-bot"
+                    artifactErrorsFailBuild: true
+                    allowUpdates: true
