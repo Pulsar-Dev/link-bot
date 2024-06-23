@@ -1,8 +1,10 @@
-use crate::{config::ConfigFile, event_handler::BotEvents};
+use std::fmt;
+
 use error_stack::{Context, Report, Result, ResultExt};
 use serenity::{all::GatewayIntents, Client};
-use std::fmt;
 use tracing::{info, trace};
+
+use crate::{config::ConfigFile, event_handler::BotEvents};
 
 #[derive(Debug)]
 pub struct BotStartError;

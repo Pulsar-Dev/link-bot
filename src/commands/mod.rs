@@ -1,16 +1,19 @@
-use crate::event_handler::BotEvents;
+use std::fmt;
+
 use async_trait::async_trait;
 use error_stack::Context;
 use serenity::{
     builder::CreateCommand, client::Context as SerenityContext,
     model::application::CommandInteraction,
 };
-use std::fmt;
+
+use crate::event_handler::BotEvents;
 
 mod ban;
 mod user_create;
 mod user_get;
 mod addons;
+mod verify;
 
 #[async_trait]
 pub trait Command
@@ -24,7 +27,10 @@ where
         interaction: &'a mut CommandInteraction,
     ) -> error_stack::Result<(), CommandExecutionError>;
 
-    fn register(&self) -> CreateCommand;
+    async fn register(
+        &self,
+        handler: &BotEvents,
+    ) -> CreateCommand;
 }
 
 pub trait CommandInfo {
@@ -49,5 +55,6 @@ pub fn load_commands() -> Vec<Box<dyn Command + Send + Sync>> {
         Box::new(user_create::UserCreateCommand),
         Box::new(user_get::UserGetCommand),
         Box::new(addons::UserAddonsCommand),
+        Box::new(verify::VerifyCommand),
     ]
 }

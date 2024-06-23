@@ -1,8 +1,3 @@
-use crate::{
-    bot::BotStartError,
-    commands::{self, Command},
-    config::ConfigFile,
-};
 use async_trait::async_trait;
 use error_stack::ResultExt;
 use serenity::{
@@ -10,6 +5,12 @@ use serenity::{
     model::{application::Interaction, gateway, id::GuildId},
 };
 use tracing::{error, info};
+
+use crate::{
+    bot::BotStartError,
+    commands::{self, Command},
+    config::ConfigFile,
+};
 
 pub struct BotEvents {
     pub commands: Vec<Box<dyn for<'a> Command + Send + Sync>>,
@@ -33,13 +34,13 @@ impl EventHandler for BotEvents {
         for g in &self.cfg.guilds {
             let guild = GuildId::new(g.clone() as u64);
 
-            let command_vec = self
-                .commands
-                .iter()
-                .map(|command| command.register())
-                .collect::<Vec<_>>();
+            let mut commands = vec![];
 
-            guild.set_commands(&ctx.http, command_vec).await.unwrap();
+            for command in &self.commands {
+                commands.push(command.register(self).await);
+            }
+
+            guild.set_commands(&ctx.http, commands).await.unwrap();
         }
     }
 

@@ -1,15 +1,11 @@
-use std::{env, string};
-
-use super::{Command, CommandExecutionError, CommandInfo};
-use crate::event_handler::BotEvents;
 use async_trait::async_trait;
 use error_stack::{IntoReport, Report, Result, ResultExt};
-use serde::{Deserialize, Serialize};
-use serenity::all::{
-    CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption,
-    CreateInteractionResponse, CreateInteractionResponseMessage, Permissions, UserId,
-};
-use tokio::sync::broadcast::error;
+use serde::Deserialize;
+use serenity::all::{CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption, CreateInteractionResponse, CreateInteractionResponseMessage};
+
+use crate::event_handler::BotEvents;
+
+use super::{Command, CommandExecutionError, CommandInfo};
 
 #[derive(Debug)]
 pub struct UserAddonsCommand;
@@ -36,6 +32,15 @@ struct ErrorResponse {
     error: String,
 }
 
+#[derive(Debug, Deserialize)]
+struct User {
+    id: Option<String>,
+    steam_id: Option<u64>,
+    gmodstore_id: Option<String>,
+    discord_id: Option<u64>,
+    error: Option<String>,
+}
+
 #[async_trait]
 impl Command for UserAddonsCommand {
     async fn execute<'a>(
@@ -44,15 +49,61 @@ impl Command for UserAddonsCommand {
         ctx: &Context,
         interaction: &'a mut CommandInteraction,
     ) -> Result<(), CommandExecutionError> {
-        let pulsar_id = match interaction.data.options.get(0) {
-            Some(target_command_data) => target_command_data,
-            None => {
-                return Err(Report::from(CommandExecutionError)
-                    .attach_printable("Failed to get command arg data for pulsar_id"))
+        let option = interaction.data.options.get(0);
+
+        let mut pulsar_id: String = "unknown".to_string();
+
+        match option.unwrap().name.as_str() {
+            "id" => {
+                pulsar_id = option.unwrap().value.as_str().unwrap().to_string();
+            }
+            "discord_user" => {
+                let target_user = option.unwrap().value.as_user_id().unwrap();
+
+                let url = format!("{}/user/{}/discord", handler.cfg.api_url, target_user);
+
+                let client = reqwest::Client::new();
+                let response = client
+                    .get(url.to_owned())
+                    .header("Authorization", handler.cfg.api_key.as_str())
+                    .send()
+                    .await
+                    .expect("Failed to send request");
+
+                let user: User = response
+                    .json()
+                    .await
+                    .expect("Failed to deserialize response body");
+
+                if user.error != None {
+                    let message = CreateInteractionResponseMessage::new().content(format!(
+                        "An error occurred while trying to get the user: {}",
+                        user.error.unwrap()
+                    ));
+
+                    let builder = CreateInteractionResponse::Message(message);
+
+                    interaction
+                        .create_response(&ctx.http, builder)
+                        .await
+                        .map_err(|e| Report::from(e).change_context(CommandExecutionError))?;
+
+                    return Ok(());
+                }
+
+                pulsar_id = user.id.unwrap();
+            }
+            _ => {
+                let message = CreateInteractionResponseMessage::new().content("No data provided.".to_string());
+
+                let builder = CreateInteractionResponse::Message(message);
+
+                interaction
+                    .create_response(&ctx.http, builder)
+                    .await
+                    .map_err(|e| Report::from(e).change_context(CommandExecutionError))?;
             }
         };
-
-        let pulsar_id = pulsar_id.value.as_str().unwrap();
 
         let client = reqwest::Client::new();
         let response = client
@@ -113,12 +164,19 @@ impl Command for UserAddonsCommand {
         return Ok(());
     }
 
-    fn register(&self) -> CreateCommand {
+    async fn register(&self, _: &BotEvents) -> CreateCommand {
         CreateCommand::new(self.name())
             .description(self.description())
             .add_option(
                 CreateCommandOption::new(CommandOptionType::String, "id", "The user's PulsarID")
-                    .required(true),
+                    .required(false),
+            )
+            .add_option(
+                CreateCommandOption::new(
+                    CommandOptionType::User,
+                    "discord_user",
+                    "The users Discord account.",
+                ).required(false),
             )
             .dm_permission(false)
     }

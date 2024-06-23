@@ -1,6 +1,7 @@
+use std::{fmt, fs};
+
 use error_stack::{Context, Report, Result};
 use serde::{Deserialize, Serialize};
-use std::{fmt, fs};
 
 static CONFIG_FILE_NAME: &'static str = "config.toml";
 

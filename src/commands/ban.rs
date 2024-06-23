@@ -1,5 +1,3 @@
-use super::{Command, CommandExecutionError, CommandInfo};
-use crate::event_handler::BotEvents;
 use async_trait::async_trait;
 use error_stack::{Report, Result};
 use serenity::{
@@ -13,6 +11,10 @@ use serenity::{
         Permissions,
     },
 };
+
+use crate::event_handler::BotEvents;
+
+use super::{Command, CommandExecutionError, CommandInfo};
 
 #[derive(Debug)]
 pub struct BanCommand;
@@ -179,7 +181,7 @@ impl Command for BanCommand {
         Ok(())
     }
 
-    fn register(&self) -> CreateCommand {
+    async fn register(&self, _: &BotEvents) -> CreateCommand {
         return CreateCommand::new(self.name())
             .description(self.description())
             .add_option(

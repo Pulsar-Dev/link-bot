@@ -1,15 +1,14 @@
-use std::{env, string};
-
-use super::{Command, CommandExecutionError, CommandInfo};
-use crate::event_handler::BotEvents;
 use async_trait::async_trait;
 use error_stack::{IntoReport, Report, Result, ResultExt};
 use serde::Serialize;
 use serenity::all::{
     CommandInteraction, CommandOptionType, Context, CreateCommand, CreateCommandOption,
-    CreateInteractionResponse, CreateInteractionResponseMessage, Permissions, UserId,
+    CreateInteractionResponse, CreateInteractionResponseMessage, Permissions,
 };
-use tokio::sync::broadcast::error;
+
+use crate::event_handler::BotEvents;
+
+use super::{Command, CommandExecutionError, CommandInfo};
 
 #[derive(Debug)]
 pub struct UserCreateCommand;
@@ -79,9 +78,9 @@ impl Command for UserCreateCommand {
         };
 
         let params = CreateUserBody {
-            steam_id: steam_id,
+            steam_id,
             gmodstore_id: gmodstore_id.to_string(),
-            discord_id: discord_id,
+            discord_id,
         };
 
         let url = format!("{}/user", handler.cfg.api_url);
@@ -131,7 +130,7 @@ impl Command for UserCreateCommand {
         Ok(())
     }
 
-    fn register(&self) -> CreateCommand {
+    async fn register(&self, _: &BotEvents) -> CreateCommand {
         CreateCommand::new(self.name())
             .description(self.description())
             .add_option(
@@ -144,7 +143,7 @@ impl Command for UserCreateCommand {
                     "steam-id",
                     "The user's SteamID64",
                 )
-                .required(true),
+                    .required(true),
             )
             .add_option(
                 CreateCommandOption::new(
@@ -152,7 +151,7 @@ impl Command for UserCreateCommand {
                     "gmodstore-id",
                     "The user's GmodstoreID",
                 )
-                .required(true),
+                    .required(true),
             )
             .default_member_permissions(Permissions::ADMINISTRATOR)
             .dm_permission(false)

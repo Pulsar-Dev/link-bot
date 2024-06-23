@@ -1,17 +1,16 @@
-use std::{any::Any, env, string};
-
-use super::{Command, CommandExecutionError, CommandInfo};
-use crate::event_handler::BotEvents;
 use async_trait::async_trait;
 use error_stack::{IntoReport, Report, Result, ResultExt};
-use serde::{Deserialize, Serialize};
-use serenity::all::CommandDataOptionValue::SubCommand;
+use serde::Deserialize;
 use serenity::all::{
-    CommandDataOption, CommandDataOptionValue, CommandInteraction, CommandOption,
+    CommandDataOptionValue, CommandInteraction,
     CommandOptionType, Context, CreateCommand, CreateCommandOption, CreateInteractionResponse,
-    CreateInteractionResponseMessage, Permissions, UserId,
+    CreateInteractionResponseMessage,
 };
-use tokio::sync::broadcast::error;
+use serenity::all::CommandDataOptionValue::SubCommand;
+
+use crate::event_handler::BotEvents;
+
+use super::{Command, CommandExecutionError, CommandInfo};
 
 #[derive(Debug)]
 pub struct UserGetCommand;
@@ -47,7 +46,7 @@ impl Command for UserGetCommand {
             Some(target_command_data) => target_command_data,
             None => {
                 return Err(Report::from(CommandExecutionError)
-                    .attach_printable("Failed to get sub command arg data"))
+                    .attach_printable("Failed to get sub command arg data"));
             }
         };
 
@@ -58,12 +57,12 @@ impl Command for UserGetCommand {
                 Some(command_data_option) => command_data_option.clone(),
                 None => {
                     return Err(Report::from(CommandExecutionError)
-                        .attach_printable("Failed to get sub command arg data"))
+                        .attach_printable("Failed to get sub command arg data"));
                 }
             },
             _ => {
                 return Err(Report::from(CommandExecutionError)
-                    .attach_printable("Failed to get sub command arg data"))
+                    .attach_printable("Failed to get sub command arg data"));
             }
         };
 
@@ -74,7 +73,7 @@ impl Command for UserGetCommand {
                     CommandDataOptionValue::User(user_id) => user_id,
                     _ => {
                         return Err(Report::from(CommandExecutionError)
-                            .attach_printable("Failed to get target user arg"))
+                            .attach_printable("Failed to get target user arg"));
                     }
                 };
 
@@ -107,7 +106,7 @@ impl Command for UserGetCommand {
             }
             _ => {
                 return Err(Report::from(CommandExecutionError)
-                    .attach_printable("Invalid sub command type"))
+                    .attach_printable("Invalid sub command type"));
             }
         }
 
@@ -119,10 +118,11 @@ impl Command for UserGetCommand {
             .await
             .expect("Failed to send request");
 
-        let user: User = response
-            .json()
-            .await
-            .expect("Failed to deserialize response body");
+        let response_text = response.text().await.expect("Failed to get response text");
+
+        let response: Result<User, _> =
+            serde_json::from_str(&response_text).map_err(|err| error_stack::Report::from(err));
+        let user = response.unwrap();
 
         if user.error != None {
             let message = CreateInteractionResponseMessage::new().content(format!(
@@ -140,13 +140,15 @@ impl Command for UserGetCommand {
             return Ok(());
         }
 
+        println!("{:?}", user);
+
         let steam_id = user.steamId.unwrap();
         let gmodstore_id = user.gmodstoreId.unwrap();
         let discord_id = user.discordId.unwrap();
 
         let message = CreateInteractionResponseMessage::new()
             .content(format!(
-            "- Pulsar ID: {}\n- Steam ID: [{}](<https://steamcommunity.com/id/{}/>)\n- Gmodstore ID: [{}](<https://www.gmodstore.com/users/{}>)\n- Discord ID: [{}](<https://discord.com/users/{}>)
+                "- Pulsar ID: {}\n- Steam ID: [{}](<https://steamcommunity.com/id/{}/>)\n- Gmodstore ID: [{}](<https://www.gmodstore.com/users/{}>)\n- Discord ID: [{}](<https://discord.com/users/{}>)
             ", user.id.unwrap(), steam_id, steam_id, gmodstore_id, gmodstore_id, discord_id, discord_id));
 
         let builder = CreateInteractionResponse::Message(message);
@@ -159,7 +161,7 @@ impl Command for UserGetCommand {
         return Ok(());
     }
 
-    fn register(&self) -> CreateCommand {
+    async fn register(&self, _: &BotEvents) -> CreateCommand {
         CreateCommand::new(self.name())
             .description(self.description())
             .add_option(
@@ -168,14 +170,14 @@ impl Command for UserGetCommand {
                     "pulsar-id",
                     "Get the user from their PulsarID",
                 )
-                .add_sub_option(
-                    CreateCommandOption::new(
-                        CommandOptionType::String,
-                        "id",
-                        "The users Pulsar ID.",
-                    )
-                    .required(true),
-                ),
+                    .add_sub_option(
+                        CreateCommandOption::new(
+                            CommandOptionType::String,
+                            "id",
+                            "The users Pulsar ID.",
+                        )
+                            .required(true),
+                    ),
             )
             .add_option(
                 CreateCommandOption::new(
@@ -183,14 +185,14 @@ impl Command for UserGetCommand {
                     "discord",
                     "Get the user from their Discord Account",
                 )
-                .add_sub_option(
-                    CreateCommandOption::new(
-                        CommandOptionType::User,
-                        "id",
-                        "The users Discord account.",
-                    )
-                    .required(true),
-                ),
+                    .add_sub_option(
+                        CreateCommandOption::new(
+                            CommandOptionType::User,
+                            "id",
+                            "The users Discord account.",
+                        )
+                            .required(true),
+                    ),
             )
             .add_option(
                 CreateCommandOption::new(
@@ -198,14 +200,14 @@ impl Command for UserGetCommand {
                     "steam-id",
                     "Get the user from their SteamID",
                 )
-                .add_sub_option(
-                    CreateCommandOption::new(
-                        CommandOptionType::String,
-                        "id",
-                        "The users SteamID64.",
-                    )
-                    .required(true),
-                ),
+                    .add_sub_option(
+                        CreateCommandOption::new(
+                            CommandOptionType::String,
+                            "id",
+                            "The users SteamID64.",
+                        )
+                            .required(true),
+                    ),
             )
             .add_option(
                 CreateCommandOption::new(
@@ -213,14 +215,14 @@ impl Command for UserGetCommand {
                     "gmodstore-id",
                     "Get the user from their Gmodstore ID",
                 )
-                .add_sub_option(
-                    CreateCommandOption::new(
-                        CommandOptionType::String,
-                        "id",
-                        "The users Gmodstore ID.",
-                    )
-                    .required(true),
-                ),
+                    .add_sub_option(
+                        CreateCommandOption::new(
+                            CommandOptionType::String,
+                            "id",
+                            "The users Gmodstore ID.",
+                        )
+                            .required(true),
+                    ),
             )
             .dm_permission(false)
     }
