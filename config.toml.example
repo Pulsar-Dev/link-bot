@@ -1,0 +1,4 @@
+discord-token=""
+guilds = [<GUILD ID>]
+api-url="<LINK TO PULSAR LINK BACKEND>"
+api-key="<PULSAR LINK BACKEND API KEY"

@@ -1,0 +1,29 @@
+[package]
+name = "pulsar-link-bot"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-trait = "0.1"
+clap = "4.4"
+dotenvy = "0.15"
+error-stack = { version = "0.4", features = ["spantrace"] }
+tokio = { version = "1.35", features = ["macros", "rt-multi-thread"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["chrono"] }
+serenity = { version = "0.12.1", default-features = false, features = [
+    "builder",
+    "cache",
+    "client",
+    "gateway",
+    "model",
+    "rustls_backend",
+    "utils",
+] }
+toml = "0.8.10"
+serde = "1.0.197"
+serde_json = "1.0.115"
+reqwest = { version = "0.12.2", features = ["json"] }
+serde_urlencoded = "0.7.1"
