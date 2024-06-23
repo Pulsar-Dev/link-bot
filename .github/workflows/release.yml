@@ -11,10 +11,6 @@ jobs:
         steps:
             -   name: Checkout
                 uses: actions/checkout@v4
-            -   name: Setup Rust
-                uses: actions-rs/toolchain@v1
-                with:
-                    toolchain: stable
             -   name: Compile
                 run: cargo build --release
             -   name: Upload binary
